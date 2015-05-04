@@ -56,7 +56,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         proxyCurrencyConverterTask("12");
     }
     public void testFloat() throws Exception, Throwable {
-        proxyCurrencyConverterTask("12..34");
+        proxyCurrencyConverterTask("12.34");
     }
 
     public void proxyCurrencyConverterTask (final String str) throws Throwable {
