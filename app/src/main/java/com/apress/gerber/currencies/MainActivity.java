@@ -34,7 +34,7 @@ import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.util.Properties;
 
-
+//Chapter 11 complete
 public class MainActivity extends ActionBarActivity implements AdapterView.OnItemSelectedListener {
 
     //define members that correspond to Views in our layout
