@@ -1,5 +1,10 @@
 package com.apress.gerber.currencies;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -17,7 +22,7 @@ public class MainActivity extends ActionBarActivity {
     private Button mCalcButton;
     private TextView mConvertedTextView;
     private EditText mAmountEditText;
-    private Spinner mForSpinner, mHomeSpinner;
+    private Spinner mForSpinner, mHomSpinner;
     private String[] mCurrencies;
 
     @Override
@@ -35,9 +40,33 @@ public class MainActivity extends ActionBarActivity {
         mAmountEditText = (EditText) findViewById(R.id.edt_amount);
         mCalcButton = (Button) findViewById(R.id.btn_calc);
         mForSpinner = (Spinner) findViewById(R.id.spn_for);
-        mHomeSpinner = (Spinner) findViewById(R.id.spn_hom);
+        mHomSpinner = (Spinner) findViewById(R.id.spn_hom);
     }
-
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager)
+                        getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
+            return true;
+        }
+        return false;
+    }
+    private void launchBrowser(String strUri) {
+        if (isOnline()) {
+            Uri uri = Uri.parse(strUri);
+            //call an implicit intent
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+        }
+    }
+    private void invertCurrencies() {
+        int nFor = mForSpinner.getSelectedItemPosition();
+        int nHom = mHomSpinner.getSelectedItemPosition();
+        mForSpinner.setSelection(nHom);
+        mHomSpinner.setSelection(nFor);
+        mConvertedTextView.setText("");
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -51,10 +80,10 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
         switch (id){
             case R.id.mnu_invert:
-                //TODO define behavior here
+                invertCurrencies();
                 break;
             case R.id.mnu_codes:
-                //TODO define behavior here
+                launchBrowser(SplashActivity.URL_CODES);
                 break;
             case R.id.mnu_exit:
                 finish();
