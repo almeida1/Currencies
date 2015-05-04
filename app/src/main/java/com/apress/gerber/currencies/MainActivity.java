@@ -1,10 +1,14 @@
 package com.apress.gerber.currencies;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -18,6 +22,16 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
+import android.content.res.AssetManager;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.Properties;
 
 public class MainActivity extends ActionBarActivity implements AdapterView.OnItemSelectedListener {
 
@@ -30,6 +44,17 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     public static final String FOR = "FOR_CURRENCY";
     public static final String HOM = "HOM_CURRENCY";
+
+    //this will contain my developers key
+    private String mKey;
+    //used to fetch the 'rates' json object from openexchangerates.org
+    public static final String RATES = "rates";
+    public static final String URL_BASE =
+            "http://openexchangerates.org/api/latest.json?app_id=";
+    //used to format data from openexchangerates.org
+    private static final DecimalFormat DECIMAL_FORMAT = new
+            DecimalFormat("#,##0.00000");
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,9 +116,11 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         mCalcButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //define behavior here
+                new CurrencyConverterTask().execute(URL_BASE + mKey);
             }
         });
+
+        mKey = getKey("open_key");
     }
     public boolean isOnline() {
         ConnectivityManager cm =
@@ -138,6 +165,20 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     private String extractCodeFromCurrency(String currency) {
         return (currency).substring(0,3);
+    }
+
+    private String getKey(String keyName){
+        AssetManager assetManager = this.getResources().getAssets();
+        Properties properties = new Properties();
+        try {
+            InputStream inputStream = assetManager.open("keys.properties");
+            properties.load(inputStream);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return  properties.getProperty(keyName);
+
     }
 
     @Override
@@ -190,5 +231,63 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
+    }
+
+    private class CurrencyConverterTask extends AsyncTask<String, Void, JSONObject> {
+        private ProgressDialog progressDialog;
+        @Override
+        protected void onPreExecute() {
+            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setTitle("Calculating Result...");
+            progressDialog.setMessage("One moment please...");
+            progressDialog.setCancelable(true);
+            progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE,
+                    "Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            CurrencyConverterTask.this.cancel(true);
+                            progressDialog.dismiss();
+                        }
+                    });
+            progressDialog.show();
+        }
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            return new JSONParser().getJSONFromUrl(params[0]);
+        }
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            double dCalculated = 0.0;
+            String strForCode =
+                    extractCodeFromCurrency(mCurrencies[mForSpinner.getSelectedItemPosition()]);
+            String strHomCode = extractCodeFromCurrency(mCurrencies[mHomSpinner.
+                    getSelectedItemPosition()]);
+            String strAmount = mAmountEditText.getText().toString();
+            try {
+                if (jsonObject == null){
+                    throw new JSONException("no data available.");
+                }
+                JSONObject jsonRates = jsonObject.getJSONObject(RATES);
+                if (strHomCode.equalsIgnoreCase("USD")){
+                    dCalculated = Double.parseDouble(strAmount) / jsonRates.getDouble(strForCode);
+                } else if (strForCode.equalsIgnoreCase("USD")) {
+                    dCalculated = Double.parseDouble(strAmount) * jsonRates.getDouble(strHomCode) ;
+                }
+                else {
+                    dCalculated = Double.parseDouble(strAmount) * jsonRates.getDouble(strHomCode)
+                            / jsonRates.getDouble(strForCode) ;
+                }
+            } catch (JSONException e) {
+                Toast.makeText(
+                        MainActivity.this,
+                        "There's been a JSON exception: " + e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
+                mConvertedTextView.setText("");
+                e.printStackTrace();
+            }
+            mConvertedTextView.setText(DECIMAL_FORMAT.format(dCalculated) + " " + strHomCode);
+            progressDialog.dismiss();
+        }
     }
 }
