@@ -9,6 +9,8 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,7 +19,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements AdapterView.OnItemSelectedListener {
 
     //define members that correspond to Views in our layout
     private Button mCalcButton;
@@ -60,6 +62,9 @@ public class MainActivity extends ActionBarActivity {
         //assign adapters to spinners
         mHomSpinner.setAdapter(arrayAdapter);
         mForSpinner.setAdapter(arrayAdapter);
+
+        mHomSpinner.setOnItemSelectedListener(this);
+        mForSpinner.setOnItemSelectedListener(this);
     }
     public boolean isOnline() {
         ConnectivityManager cm =
@@ -109,5 +114,28 @@ public class MainActivity extends ActionBarActivity {
                 break;
         }
         return true;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+        switch (parent.getId()) {
+
+            case R.id.spn_for:
+                //define behavior here
+                break;
+
+            case R.id.spn_hom:
+                //define behavior here
+                break;
+
+            default:
+                break;
+        }
+
+    }
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }
