@@ -29,6 +29,7 @@ public class SplashActivity extends Activity {
         setContentView(R.layout.activity_splash);
         new FetchCodesTask().execute(URL_CODES);
     }
+
     private class FetchCodesTask extends AsyncTask<String, Void, JSONObject> {
         @Override
         protected JSONObject doInBackground(String... params) {
